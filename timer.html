@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class Countdown Timer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, serif;
+    background: #f8f7f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .timer-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+  }
+  .timer-label {
+    font-size: 13px;
+    color: #888;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .clock-face {
+    position: relative;
+    width: 220px;
+    height: 220px;
+  }
+  .clock-face svg {
+    width: 220px;
+    height: 220px;
+    transform: rotate(-90deg);
+  }
+  .clock-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .time-display {
+    font-size: 42px;
+    font-weight: 500;
+    color: #1a1a1a;
+    font-family: monospace;
+    letter-spacing: -1px;
+  }
+  .time-sub {
+    font-size: 12px;
+    color: #888;
+  }
+  .btn-row {
+    display: flex;
+    gap: 10px;
+  }
+  .btn-row button {
+    font-size: 13px;
+    padding: 8px 20px;
+    border: 1px solid #ccc;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn-row button:hover {
+    background: #f0f0f0;
+  }
+  .expired-msg {
+    font-size: 15px;
+    color: #a32d2d;
+    font-weight: 500;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="timer-wrap">
+  <div class="timer-label">time remaining</div>
+  <div class="clock-face">
+    <svg viewBox="0 0 220 220">
+      <circle cx="110" cy="110" r="98" fill="none" stroke="#e0e0e0" stroke-width="10"/>
+      <circle id="prog" cx="110" cy="110" r="98" fill="none" stroke="#185FA5" stroke-width="10"
+        stroke-dasharray="615.75" stroke-dashoffset="0" stroke-linecap="round"/>
+    </svg>
+    <div class="clock-center">
+      <div class="time-display" id="display">60:00</div>
+      <div class="time-sub" id="sub">of 60 minutes</div>
+    </div>
+  </div>
+  <div class="expired-msg" id="expired">Time is up!</div>
+  <div class="btn-row">
+    <button id="pauseBtn" onclick="togglePause()">Pause</button>
+    <button onclick="resetTimer()">Reset</button>
+  </div>
+</div>
+
+<script>
+  const TOTAL = 60 * 60;
+  const CIRC = 2 * Math.PI * 98;
+  let remaining = TOTAL;
+  let paused = false;
+  let done = false;
+  let interval = null;
+
+  function fmt(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+  }
+
+  function updateUI() {
+    document.getElementById('display').textContent = fmt(remaining);
+    const frac = remaining / TOTAL;
+    const offset = CIRC * (1 - frac);
+    document.getElementById('prog').style.strokeDashoffset = offset;
+    const pct = Math.round(frac * 100);
+    document.getElementById('sub').textContent = pct + '% remaining';
+    if (remaining <= 300) {
+      document.getElementById('prog').style.stroke = '#A32D2D';
+    } else if (remaining <= 600) {
+      document.getElementById('prog').style.stroke = '#BA7517';
+    } else {
+      document.getElementById('prog').style.stroke = '#185FA5';
+    }
+  }
+
+  function tick() {
+    if (paused || done) return;
+    if (remaining <= 0) {
+      done = true;
+      document.getElementById('display').textContent = '00:00';
+      document.getElementById('prog').style.strokeDashoffset = CIRC;
+      document.getElementById('expired').style.display = 'block';
+      document.getElementById('sub').textContent = 'time is up';
+      clearInterval(interval);
+      return;
+    }
+    remaining--;
+    updateUI();
+  }
+
+  function togglePause() {
+    if (done) return;
+    paused = !paused;
+    document.getElementById('pauseBtn').textContent = paused ? 'Resume' : 'Pause';
+  }
+
+  function resetTimer() {
+    clearInterval(interval);
+    remaining = TOTAL;
+    paused = false;
+    done = false;
+    document.getElementById('pauseBtn').textContent = 'Pause';
+    document.getElementById('expired').style.display = 'none';
+    document.getElementById('prog').style.stroke = '#185FA5';
+    updateUI();
+    interval = setInterval(tick, 1000);
+  }
+
+  updateUI();
+  interval = setInterval(tick, 1000);
+</script>
+</body>
+</html>
